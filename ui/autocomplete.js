@@ -275,6 +275,9 @@ $.widget( "ui.autocomplete", {
 				var item = ui.item.data( "ui-autocomplete-item" ),
 					previous = this.previous;
 
+				var sourceItem = $.grep(this.options.source, function(e){ return e == item; })[0];
+				sourceItem.added = !sourceItem.added;
+
 				// only trigger when focus was lost (click on menu)
 				if ( this.element[ 0 ] !== this.document[ 0 ].activeElement ) {
 					this.element.focus();
@@ -295,7 +298,8 @@ $.widget( "ui.autocomplete", {
 				// this allows custom select handling to work properly
 				this.term = this._value();
 
-				this.close( event );
+				// Don't close autocomplete after each select
+				// this.close( event );
 				this.selectedItem = item;
 			}
 		});
@@ -340,6 +344,27 @@ $.widget( "ui.autocomplete", {
 		}
 	},
 
+	uncheck: function(value) {
+		if (value !== undefined) {
+			this.menu.element.find('li').each(function(index, el) {
+				var $el = $(el);
+				if ($el.text() === value) $el.removeClass('added');
+			});
+			var item = $.grep(this.options.source, function(e){ return e.label === value; })[0];
+			if (item) item.added = false;
+		}
+	},
+
+	setAdded: function(addedItems) {
+		var that = this;
+		addedItems.forEach(function(added) {
+			var item = $.grep(that.options.source, function(e){ return e.label === added; })[0];
+			if (item) item.added = true;
+
+		});
+
+	},
+
 	_appendTo: function() {
 		var element = this.options.appendTo;
 
@@ -366,7 +391,7 @@ $.widget( "ui.autocomplete", {
 		if ( $.isArray( this.options.source ) ) {
 			array = this.options.source;
 			this.source = function( request, response ) {
-				response( $.ui.autocomplete.filter( array, request.term ) );
+				response( $.ui.autocomplete.filter( this.options.source, request.term ) );
 			};
 		} else if ( typeof this.options.source === "string" ) {
 			url = this.options.source;
@@ -495,7 +520,8 @@ $.widget( "ui.autocomplete", {
 			}
 			return $.extend( {}, item, {
 				label: item.label || item.value,
-				value: item.value || item.label
+				value: item.value || item.label,
+				added: item.added || false
 			});
 		});
 	},
@@ -540,7 +566,7 @@ $.widget( "ui.autocomplete", {
 	},
 
 	_renderItem: function( ul, item ) {
-		return $( "<li>" ).text( item.label ).appendTo( ul );
+		return $( "<li>" ).text( item.label + " " + item.added ).appendTo( ul );
 	},
 
 	_move: function( direction, event ) {
@@ -618,7 +644,12 @@ $.widget( "ui.autocomplete", $.ui.autocomplete, {
 		}
 		this.liveRegion.children().hide();
 		$( "<div>" ).text( message ).appendTo( this.liveRegion );
+	},
+
+	_renderItem: function( ul, item ) {
+		return $( "<li>" ).text( item.label ).toggleClass('added', item.added).appendTo( ul );
 	}
+
 });
 
 return $.ui.autocomplete;
