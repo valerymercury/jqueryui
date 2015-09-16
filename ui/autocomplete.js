@@ -275,7 +275,7 @@ $.widget( "ui.autocomplete", {
 				var item = ui.item.data( "ui-autocomplete-item" ),
 					previous = this.previous;
 
-				var sourceItem = $.grep(this.options.source, function(e){ return e == item; })[0];
+				var sourceItem = $.grep(this.options.source, function(e){ return e === item || e.value === item.value && e.value ; })[0];
 				sourceItem.added = !sourceItem.added;
 
 				// only trigger when focus was lost (click on menu)
